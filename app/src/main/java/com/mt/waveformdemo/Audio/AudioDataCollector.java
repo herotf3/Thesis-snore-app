@@ -3,9 +3,11 @@ package com.mt.waveformdemo.Audio;
 import android.util.Log;
 
 import com.mt.waveformdemo.Audio.processor.AudioCheckingProcessor;
+import com.mt.waveformdemo.Audio.processor.AudioProcessorDelegate;
 import com.mt.waveformdemo.Audio.type.AudioFrame;
 import com.mt.waveformdemo.Audio.type.AudioSegment;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -33,7 +35,7 @@ public class AudioDataCollector {
         this.audioProcessorDelegate = audioProcessorDelegate;
     }
 
-    public void collect(final short[] data) {
+    public void collect(final Short[] data) {
         AudioFrame audioFrame = new AudioFrame(data, timeCounter++);
         boolean willGet = true;
         if (isFilter) {
@@ -117,7 +119,7 @@ public class AudioDataCollector {
         this.audioProcessorDelegate = audioProcessorDelegate;
     }
 
-    public void collect(float[] data) {
+    public void collect(final Float[] data) {
         AudioFrame audioFrame = new AudioFrame(data, timeCounter++);
         boolean willGet = true;
         if (isFilter) {

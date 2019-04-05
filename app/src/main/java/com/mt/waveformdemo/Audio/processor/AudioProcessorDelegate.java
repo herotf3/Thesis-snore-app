@@ -1,4 +1,4 @@
-package com.mt.waveformdemo.Audio;
+package com.mt.waveformdemo.Audio.processor;
 
 import com.mt.waveformdemo.Audio.type.AudioSegment;
 

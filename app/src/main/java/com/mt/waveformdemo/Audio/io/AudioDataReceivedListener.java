@@ -15,7 +15,7 @@
 package com.mt.waveformdemo.Audio.io;
 
 public interface AudioDataReceivedListener {
-    void onAudioDataReceived(short[] data);
+    void onAudioDataReceived(Short[] data);
 
-    void onAudioDataReceived(float[] data);
+    void onAudioDataReceived(Float[] data);
 }

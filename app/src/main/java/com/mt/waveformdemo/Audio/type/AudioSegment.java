@@ -1,6 +1,7 @@
 package com.mt.waveformdemo.Audio.type;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 /**
@@ -38,23 +39,6 @@ public class AudioSegment {
         segment.addAll(frames);
     }
 
-    public short[] toShortBuffer() {
-        short[] buffer = new short[totalSamples];
-        for (int i = 0; i < segment.size(); i++) {
-            short[] frame = segment.get(i).getShortBuffer();
-            System.arraycopy(frame, frame.length, buffer, i * frame.length, i * (frame.length + 1));
-        }
-        return buffer;
-    }
-
-    public ArrayList<Short> toShortArrayList() {
-        ArrayList<Short> list = new ArrayList<>();
-        for (int i = 0; i < segment.size(); i++) {
-            list.addAll(segment.get(i).getShortList());
-        }
-        return list;
-    }
-
     public ArrayList<Float> toFloatArrayList() {
         ArrayList<Float> list = new ArrayList<>();
         for (int i = 0; i < segment.size(); i++) {
@@ -73,6 +57,10 @@ public class AudioSegment {
         return buffer;
     }
 
+    // merge all frame to a single linked list of samples - a single frame
+    public AudioFrame mergeToSingleFrame(){
+        return null;
+    }
 
 }
 

@@ -20,13 +20,13 @@ import android.media.AudioTrack;
 import android.os.Build;
 import android.util.Log;
 
-import com.mt.waveformdemo.Audio.MyAudioFormat;
+import com.mt.waveformdemo.Audio.AudioFormatConfig;
 import com.mt.waveformdemo.Audio.type.AudioSegment;
 
 import java.nio.FloatBuffer;
 
 public class PlaybackThread {
-    public static final int SAMPLE_RATE = MyAudioFormat.SAMPLE_RATE;
+    public static final int SAMPLE_RATE = AudioFormatConfig.SAMPLE_RATE;
     private static final String LOG_TAG = PlaybackThread.class.getSimpleName();
 
     public PlaybackThread(float[] samples, PlaybackListener listener) {

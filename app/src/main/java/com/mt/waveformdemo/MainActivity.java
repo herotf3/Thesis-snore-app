@@ -33,7 +33,7 @@ import android.widget.Toast;
 
 import com.mt.waveformdemo.Audio.AudioDataCollector;
 import com.mt.waveformdemo.Audio.io.AudioDataReceivedListener;
-import com.mt.waveformdemo.Audio.AudioProcessorDelegate;
+import com.mt.waveformdemo.Audio.processor.AudioProcessorDelegate;
 import com.mt.waveformdemo.Audio.AudioSaver;
 import com.mt.waveformdemo.Audio.io.RecordingThread;
 import com.mt.waveformdemo.Audio.io.PlaybackListener;
@@ -284,15 +284,15 @@ public class MainActivity extends AppCompatActivity implements AudioDataReceived
 
     // Audio data delegate
     @Override
-    public void onAudioDataReceived(short[] data) {
-        mRealtimeWaveformView.setSamples(data);
+    public void onAudioDataReceived(Short[] data) {
+        //mRealtimeWaveformView.setSamples(data);
 
         audioDataCollector.collect(data);
 
     }
 
     @Override
-    public void onAudioDataReceived(float[] data) {
+    public void onAudioDataReceived(Float[] data) {
         //mRealtimeWaveformView.setSamples(data);
 
         audioDataCollector.collect(data);

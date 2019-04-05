@@ -3,6 +3,8 @@ package com.mt.waveformdemo.Audio.type;
 import com.mt.waveformdemo.Audio.Converter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 /**
  * Created by macbook on 3/28/19.
@@ -11,24 +13,20 @@ import java.util.ArrayList;
 public class AudioFrame {
     private int timeIndex;
     public int nSampleInFrame;
-    private float[] floatBuffer;
-    private short[] shortBuffer;
+    private LinkedList<Float> floatBuffer;
+    private LinkedList<Short> shortBuffer;
 
-    public AudioFrame(short[] data, int index) {
+    public AudioFrame(Short[] data, int index) {
         this.timeIndex = index;
         nSampleInFrame = data.length;
-        shortBuffer = data.clone();
-        floatBuffer = new float[data.length];
-        for (int i = 0; i < data.length; i++) {
-            floatBuffer[i] = 0f + data[i];
-        }
+        shortBuffer = new LinkedList<>(Arrays.asList(data));
+
     }
 
-    public AudioFrame(float[] data, int index) {
+    public AudioFrame(Float[] data, int index) {
         this.timeIndex = index;
         nSampleInFrame = data.length;
-        floatBuffer = data.clone();
-        shortBuffer = new short[data.length];
+        floatBuffer = new LinkedList<>(Arrays.asList(data));
         shortBuffer = Converter.PCMFloatToShortBuffer(floatBuffer);
     }
 
@@ -36,43 +34,35 @@ public class AudioFrame {
         return timeIndex;
     }
 
-    public float[] getFloatBuffer() {
+    public LinkedList<Float> getFloatBuffer() {
         return floatBuffer;
     }
 
-    public void setFloatBuffer(float[] floatBuffer) {
+    public void setFloatBuffer(LinkedList<Float> floatBuffer) {
         this.floatBuffer = floatBuffer;
     }
 
-    public short[] getShortBuffer() {
+    public LinkedList<Short> getShortBuffer() {
         return shortBuffer;
     }
 
-    public void setShortBuffer(short[] shortBuffer) {
+    public void setShortBuffer(LinkedList<Short> shortBuffer) {
         this.shortBuffer = shortBuffer;
     }
 
     public ArrayList<Short> getShortList() {
-        ArrayList<Short> list = new ArrayList<>();
-        for (int i = 0; i < shortBuffer.length; i++) {
-            list.add(shortBuffer[i]);
-        }
-        return list;
+        return new ArrayList<>(this.shortBuffer);
     }
 
     public ArrayList<Float> getFloatList() {
-        ArrayList<Float> list = new ArrayList<>();
-        for (int i = 0; i < floatBuffer.length; i++) {
-            list.add(floatBuffer[i]);
-        }
-        return list;
+        return new ArrayList<>(this.floatBuffer);
     }
 
     public short getShortSample(int index) {
-        return this.shortBuffer[index];
+        return this.shortBuffer.get(index);
     }
 
     public float getFloatSample(int index) {
-        return this.floatBuffer[index];
+        return this.floatBuffer.get(index);
     }
 }

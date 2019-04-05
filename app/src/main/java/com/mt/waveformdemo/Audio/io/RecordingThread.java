@@ -18,14 +18,18 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Process;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import com.mt.waveformdemo.Audio.MyAudioFormat;
+import com.mt.waveformdemo.Audio.AudioFormatConfig;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class RecordingThread {
     private static final String LOG_TAG = RecordingThread.class.getSimpleName();
-    private static final int SAMPLE_RATE = MyAudioFormat.SAMPLE_RATE;
+    private static final int SAMPLE_RATE = AudioFormatConfig.SAMPLE_RATE;
 
     public RecordingThread(AudioDataReceivedListener listener) {
         mListener = listener;
@@ -71,7 +75,7 @@ public class RecordingThread {
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
 
-        bufferSize = Math.min(bufferSize, MyAudioFormat.FRAME_SIZE);
+        bufferSize = Math.min(bufferSize, AudioFormatConfig.FRAME_SIZE);
         if (bufferSize == AudioRecord.ERROR || bufferSize == AudioRecord.ERROR_BAD_VALUE) {
             bufferSize = SAMPLE_RATE * 2;
         }
@@ -98,7 +102,11 @@ public class RecordingThread {
             shortsRead += numberOfShort;
 
             // Notify waveform
-            mListener.onAudioDataReceived(audioBuffer);
+            Short[] arr = new Short[audioBuffer.length];
+            for (int i=0;i<audioBuffer.length;i++){
+                arr[i] = audioBuffer[i];
+            }
+            mListener.onAudioDataReceived(arr);
         }
 
         record.stop();
@@ -110,14 +118,14 @@ public class RecordingThread {
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void recordPCM_Float() {
         Log.v(LOG_TAG, "Start");
-        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
+        Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
 
         // buffer size in bytes
         int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_FLOAT);
 
-        bufferSize = Math.min(bufferSize, MyAudioFormat.FRAME_SIZE);
+        bufferSize = Math.min(bufferSize, AudioFormatConfig.FRAME_SIZE);
         if (bufferSize == AudioRecord.ERROR || bufferSize == AudioRecord.ERROR_BAD_VALUE) {
             bufferSize = SAMPLE_RATE * 2;
         }
@@ -141,10 +149,14 @@ public class RecordingThread {
         long shortsRead = 0;
         while (mShouldContinue) {
             int numberOfShort = record.read(audioBuffer, 0, audioBuffer.length, AudioRecord.READ_BLOCKING);
-            shortsRead += numberOfShort;
 
-            // Notify waveform
-            mListener.onAudioDataReceived(audioBuffer);
+            shortsRead += numberOfShort;
+            Float[] floats = new Float[audioBuffer.length];
+            for (int i=0;i<audioBuffer.length;i++){
+                floats[i] = audioBuffer[i];
+            }
+
+            mListener.onAudioDataReceived(floats);
         }
 
         record.stop();
