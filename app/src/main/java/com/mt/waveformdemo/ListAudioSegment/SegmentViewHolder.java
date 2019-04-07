@@ -35,7 +35,7 @@ class SegmentViewHolder extends RecyclerView.ViewHolder implements View.OnClickL
     @SuppressLint("SetTextI18n")
     public void bindData(AudioSegment audioSegment) {
         segment = audioSegment;
-        tvName.setText("Segment with start time index:" + audioSegment.getSegment().get(0).getTimeIndex());
+        tvName.setText("Segment with start time index:" + audioSegment.getFrames().get(0).getTimeIndex());
     }
 
     @Override

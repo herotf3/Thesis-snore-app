@@ -5,6 +5,7 @@ import com.mt.waveformdemo.Audio.Converter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by macbook on 3/28/19.
@@ -13,56 +14,73 @@ import java.util.LinkedList;
 public class AudioFrame {
     private int timeIndex;
     public int nSampleInFrame;
-    private LinkedList<Float> floatBuffer;
-    private LinkedList<Short> shortBuffer;
+    private LinkedList<Float> floatSamples;
+    private LinkedList<Short> shortSamples;
 
     public AudioFrame(Short[] data, int index) {
         this.timeIndex = index;
         nSampleInFrame = data.length;
-        shortBuffer = new LinkedList<>(Arrays.asList(data));
+        shortSamples = new LinkedList<>(Arrays.asList(data));
 
     }
 
     public AudioFrame(Float[] data, int index) {
         this.timeIndex = index;
         nSampleInFrame = data.length;
-        floatBuffer = new LinkedList<>(Arrays.asList(data));
-        shortBuffer = Converter.PCMFloatToShortBuffer(floatBuffer);
+        floatSamples = new LinkedList<>(Arrays.asList(data));
+        shortSamples = Converter.PCMFloatToShortBuffer(floatSamples);
     }
+
+    public AudioFrame(LinkedList<Float> sampleList, int timeIndex) {
+        this.timeIndex = timeIndex;
+        nSampleInFrame = sampleList.size();
+        floatSamples = sampleList;
+    }
+
+    public AudioFrame(List<Float> samples, int timeIndex) {
+        this.timeIndex = timeIndex;
+        this.floatSamples = new LinkedList<>(samples);
+    }
+
 
     public int getTimeIndex() {
         return timeIndex;
     }
 
-    public LinkedList<Float> getFloatBuffer() {
-        return floatBuffer;
+    public LinkedList<Float> getFloatSamples() {
+        return floatSamples;
     }
 
-    public void setFloatBuffer(LinkedList<Float> floatBuffer) {
-        this.floatBuffer = floatBuffer;
+    public void setFloatSamples(LinkedList<Float> floatSamples) {
+        this.floatSamples = floatSamples;
     }
 
-    public LinkedList<Short> getShortBuffer() {
-        return shortBuffer;
+    public LinkedList<Short> getShortSamples() {
+        return shortSamples;
     }
 
-    public void setShortBuffer(LinkedList<Short> shortBuffer) {
-        this.shortBuffer = shortBuffer;
+    public void setShortSamples(LinkedList<Short> shortSamples) {
+        this.shortSamples = shortSamples;
     }
 
     public ArrayList<Short> getShortList() {
-        return new ArrayList<>(this.shortBuffer);
+        return new ArrayList<>(this.shortSamples);
     }
 
     public ArrayList<Float> getFloatList() {
-        return new ArrayList<>(this.floatBuffer);
+        return new ArrayList<>(this.floatSamples);
     }
 
     public short getShortSample(int index) {
-        return this.shortBuffer.get(index);
+        return this.shortSamples.get(index);
     }
 
     public float getFloatSample(int index) {
-        return this.floatBuffer.get(index);
+        return this.floatSamples.get(index);
+    }
+
+    public final AudioFrame cropFrame(int start, int end){
+        List<Float> samples = floatSamples.subList(start,end);
+        return new AudioFrame(samples,this.timeIndex);
     }
 }
