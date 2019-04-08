@@ -19,21 +19,21 @@ import static java.lang.Math.abs;
 public class SegmentStandardlizer {
     private float standardDuration; // sec
     private int standardNSampleInSegment;
-    private int frameSize;
-    private int nFrameInSegment;
+    private int nExSample; // Number of excess samples in frame
 
 
 
     public SegmentStandardlizer(float standardDuration) {
         this.standardDuration = standardDuration;
         this.standardNSampleInSegment = (int) (standardDuration*AudioFormatConfig.SAMPLE_RATE);
+        nExSample =   standardNSampleInSegment % AudioFormatConfig.FRAME_SIZE;
     }
 
     public ArrayList<AudioSegment> standardlize(final AudioSegment segment)
     {
         ArrayList<AudioSegment> standardedSegments = new ArrayList<>();
 
-        int k = segment.getNumberOfFrame()* AudioFormatConfig.FRAME_SIZE - standardNSampleInSegment;
+        int k = segment.getTotalSample() - standardNSampleInSegment;
         if (k==0){
             // fixed segment
             standardedSegments.add(segment);
@@ -48,42 +48,35 @@ public class SegmentStandardlizer {
         return standardedSegments;
     }
 
-    private ArrayList<AudioSegment> splitSegment(final AudioSegment needSplitSegment, int excessSample) {
-        AudioSegment segment = null;
-        try {
-            segment = (AudioSegment) needSplitSegment.clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
+    private ArrayList<AudioSegment> splitSegment(final AudioSegment segment, int excessSample) {
 
         ArrayList<AudioSegment> resList = new ArrayList<>();
         // Index of frame to split
         int splFrameIndex = standardNSampleInSegment / AudioFormatConfig.FRAME_SIZE;
-        // Number of excess samples in splitted sample
-        int nExSample =   standardNSampleInSegment % AudioFormatConfig.FRAME_SIZE;
 
-        List<AudioFrame> leftFrames, rightFrames, orgFrames;
-        orgFrames = segment.getFrames();
-        leftFrames = new LinkedList<>(orgFrames.subList(0,splFrameIndex-1));
-        rightFrames = new LinkedList<>(orgFrames.subList(splFrameIndex+1,orgFrames.size()-1)) ;
+        AudioSegment leftSegment, rightSegment;
+        leftSegment = segment.splitFrame(0,splFrameIndex);
+        rightSegment = segment.splitFrame(splFrameIndex+1,segment.getNumberOfFrame());
 
-        AudioFrame splitFrame = orgFrames.get(splFrameIndex);
-        orgFrames.clear();
-        AudioFrame tmp = splitFrame.cropFrame( splitFrame.nSampleInFrame-nExSample,splitFrame.nSampleInFrame);
-        rightFrames.add( tmp );
-        tmp = splitFrame.cropFrame(0,splitFrame.nSampleInFrame-nExSample-1);
-        leftFrames.add(tmp );
+        AudioFrame splitFrame = segment.getFrames().get(splFrameIndex);
 
+        AudioFrame tmp = splitFrame.cropFrame(0,splitFrame.nSampleInFrame-nExSample);
+        leftSegment.add(tmp );
+        rightSegment.addFirst(splitFrame);
 
-        resList.add(new AudioSegment(leftFrames));
-        if (rightFrames.size()>0)
-            resList.addAll(this.standardlize(new AudioSegment(rightFrames)));
+        resList.add(leftSegment);
+        if (rightSegment.getNumberOfFrame()>0)
+            resList.addAll(this.standardlize(rightSegment));
 
         return  resList;
     }
 
     private AudioSegment paddingSegment(AudioSegment segment, int nSample) {
-        AudioFrame paddingFrame = new AudioFrame(new Float[nSample],segment.endTimeIndex());
+        Float[] paddingSamples =  new Float[nSample];
+        for (int i=0;i<nSample;i++){
+            paddingSamples[i]=0f;
+        }
+        AudioFrame paddingFrame = new AudioFrame(paddingSamples,segment.endTimeIndex());
         segment.add(paddingFrame);
         return segment;
     }

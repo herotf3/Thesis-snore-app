@@ -1,5 +1,6 @@
 package com.mt.waveformdemo.Audio.type;
 
+import com.mt.waveformdemo.Audio.AudioFormatConfig;
 import com.mt.waveformdemo.Audio.Converter;
 
 import java.util.ArrayList;
@@ -21,7 +22,6 @@ public class AudioFrame {
         this.timeIndex = index;
         nSampleInFrame = data.length;
         shortSamples = new LinkedList<>(Arrays.asList(data));
-
     }
 
     public AudioFrame(Float[] data, int index) {
@@ -31,17 +31,17 @@ public class AudioFrame {
         shortSamples = Converter.PCMFloatToShortBuffer(floatSamples);
     }
 
-    public AudioFrame(LinkedList<Float> sampleList, int timeIndex) {
-        this.timeIndex = timeIndex;
-        nSampleInFrame = sampleList.size();
-        floatSamples = sampleList;
-    }
-
     public AudioFrame(List<Float> samples, int timeIndex) {
         this.timeIndex = timeIndex;
         this.floatSamples = new LinkedList<>(samples);
+        this.nSampleInFrame = samples.size();
     }
 
+    public AudioFrame(AudioFrame frame)  {
+        this.floatSamples = new LinkedList<>(frame.floatSamples);
+        this.timeIndex = frame.getTimeIndex();
+        this.nSampleInFrame = frame.nSampleInFrame;
+    }
 
     public int getTimeIndex() {
         return timeIndex;
@@ -51,16 +51,8 @@ public class AudioFrame {
         return floatSamples;
     }
 
-    public void setFloatSamples(LinkedList<Float> floatSamples) {
-        this.floatSamples = floatSamples;
-    }
-
     public LinkedList<Short> getShortSamples() {
         return shortSamples;
-    }
-
-    public void setShortSamples(LinkedList<Short> shortSamples) {
-        this.shortSamples = shortSamples;
     }
 
     public ArrayList<Short> getShortList() {
@@ -82,5 +74,10 @@ public class AudioFrame {
     public final AudioFrame cropFrame(int start, int end){
         List<Float> samples = floatSamples.subList(start,end);
         return new AudioFrame(samples,this.timeIndex);
+    }
+
+    public void append(LinkedList<Float> floatSamples) {
+        this.floatSamples.addAll(floatSamples);
+        this.nSampleInFrame += floatSamples.size();
     }
 }
