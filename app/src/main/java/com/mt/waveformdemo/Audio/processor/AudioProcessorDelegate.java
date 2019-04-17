@@ -1,6 +1,7 @@
 package com.mt.waveformdemo.Audio.processor;
 
-import com.mt.waveformdemo.Audio.type.AudioSegment;
+
+import com.mt.waveformdemo.Audio.data.AudioSegment;
 
 /**
  * Created by macbook on 3/31/19.

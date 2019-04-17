@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.mt.waveformdemo.Audio.type.AudioSegment;
+import com.mt.waveformdemo.Audio.data.AudioSegment;
 import com.mt.waveformdemo.R;
 
 import java.util.ArrayList;

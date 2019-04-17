@@ -1,4 +1,4 @@
-package com.mt.waveformdemo.Audio;
+package com.mt.waveformdemo.Audio.utils;
 
 import java.util.LinkedList;
 
@@ -8,7 +8,7 @@ import java.util.LinkedList;
 
 public class Converter {
     public static double linearToDecibel(final double value) {
-        return 20.0 * Math.log10(value);
+        return 10.0 * Math.log10(value);
     }
 
     public static LinkedList<Short> PCMFloatToShortBuffer(LinkedList<Float> floatBuffer) {

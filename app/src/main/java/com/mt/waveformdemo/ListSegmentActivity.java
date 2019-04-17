@@ -8,9 +8,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.mt.waveformdemo.Audio.AudioSaver;
+import com.mt.waveformdemo.Audio.data.AudioSegment;
 import com.mt.waveformdemo.Audio.io.PlaybackListener;
 import com.mt.waveformdemo.Audio.io.PlaybackThread;
-import com.mt.waveformdemo.Audio.type.AudioSegment;
 import com.mt.waveformdemo.ListAudioSegment.ListSegmentAdapter;
 import com.mt.waveformdemo.ListAudioSegment.RecycleViewClickListener;
 
@@ -53,7 +53,7 @@ public class ListSegmentActivity extends AppCompatActivity implements RecycleVie
         if (playbackThread == null) {
             playbackThread = new PlaybackThread(ListSegmentActivity.this);
         }
-        playbackThread.setSegment(listSegment.get(position));
+        playbackThread.setAudioSegment(listSegment.get(position));
         // play the selected segment
         if (playbackThread.playing()) {
             playbackThread.stopPlayback();
@@ -71,7 +71,7 @@ public class ListSegmentActivity extends AppCompatActivity implements RecycleVie
 
     @Override
     public void onCompletion() {
-        playbackThread.stopPlayback();
+        //playbackThread.stopPlayback();
         Toast.makeText(this, "Playback finish.", Toast.LENGTH_SHORT).show();
     }
 }

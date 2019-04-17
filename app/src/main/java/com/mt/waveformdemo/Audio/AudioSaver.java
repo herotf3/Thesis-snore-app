@@ -1,7 +1,8 @@
 package com.mt.waveformdemo.Audio;
 
-import com.mt.waveformdemo.Audio.segmentation.SegmentStandardlizer;
-import com.mt.waveformdemo.Audio.type.AudioSegment;
+import com.mt.waveformdemo.Audio.data.AudioSegment;
+import com.mt.waveformdemo.Audio.segmentation.SegmentStandardizer;
+import com.mt.waveformdemo.Audio.utils.AudioFormatConfig;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,14 +16,14 @@ import java.util.ArrayList;
 public class AudioSaver {
     private static AudioSaver instance;
     private float[] savedAudioBuffer;
-    private SegmentStandardlizer standardlizer;
+    private SegmentStandardizer standardlizer;
 
     public ArrayList<AudioSegment> segmentsHolder;
 
 
     private AudioSaver() {
         segmentsHolder = new ArrayList<AudioSegment>();
-        standardlizer = new SegmentStandardlizer(AudioFormatConfig.SEGMENT_DURATION);
+        standardlizer = new SegmentStandardizer(AudioFormatConfig.SEGMENT_DURATION);
     }
 
     public static AudioSaver getInstance() {
@@ -39,17 +40,5 @@ public class AudioSaver {
     public void saveCurrentData(String name) throws FileNotFoundException {
         File file = new File(name);
         FileOutputStream os = new FileOutputStream(file);
-    }
-
-    public float[] SavedAudioBuffer() {
-        ArrayList<Float> buffer = new ArrayList<>();
-        for (int i = 0; i < segmentsHolder.size(); i++) {
-            buffer.addAll(segmentsHolder.get(i).toFloatArrayList());
-        }
-        savedAudioBuffer = new float[buffer.size()];
-        for (int i = 0; i < buffer.size(); i++) {
-            savedAudioBuffer[i] = buffer.get(i);
-        }
-        return savedAudioBuffer;
     }
 }

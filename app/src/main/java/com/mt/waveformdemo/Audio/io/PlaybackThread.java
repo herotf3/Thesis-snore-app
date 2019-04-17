@@ -17,39 +17,40 @@ package com.mt.waveformdemo.Audio.io;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.os.Build;
 import android.util.Log;
 
-import com.mt.waveformdemo.Audio.AudioFormatConfig;
-import com.mt.waveformdemo.Audio.type.AudioSegment;
+import com.mt.waveformdemo.Audio.data.AudioFrame;
+import com.mt.waveformdemo.Audio.data.AudioSegment;
+import com.mt.waveformdemo.Audio.data.AudioSignal;
+import com.mt.waveformdemo.Audio.data.SignalFormat;
+import com.mt.waveformdemo.Audio.utils.AudioFormatConfig;
 
-import java.nio.FloatBuffer;
+import java.util.Iterator;
 
 public class PlaybackThread {
     public static final int SAMPLE_RATE = AudioFormatConfig.SAMPLE_RATE;
     private static final String LOG_TAG = PlaybackThread.class.getSimpleName();
 
-    public PlaybackThread(float[] samples, PlaybackListener listener) {
-        mSamples = FloatBuffer.wrap(samples);
-        mNumSamples = samples.length;
+    public void setAudioSegment(AudioSegment audioSegment) {
+        this.audioSegment = audioSegment;
+//        setupAudioTrack(audioSegment.sourceSignalFormat());
+    }
+
+    private AudioSegment audioSegment;
+    private AudioTrack audioTrack ;
+
+    private Thread mThread;
+    private boolean mShouldContinue;
+    private PlaybackListener mListener;
+
+    public PlaybackThread(AudioSegment audioSegment, PlaybackListener listener){
         mListener = listener;
+        this.audioSegment = audioSegment;
     }
 
     public PlaybackThread(PlaybackListener listener) {
         mListener = listener;
     }
-
-    private Thread mThread;
-    private boolean mShouldContinue;
-
-    public void setmSamples(FloatBuffer mSamples) {
-        this.mSamples = mSamples;
-        this.mNumSamples = mSamples.array().length;
-    }
-
-    private FloatBuffer mSamples;
-    private int mNumSamples;
-    private PlaybackListener mListener;
 
     public boolean playing() {
         return mThread != null;
@@ -64,7 +65,7 @@ public class PlaybackThread {
         mThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                play();
+                playSegment();
             }
         });
         mThread.start();
@@ -78,81 +79,69 @@ public class PlaybackThread {
         mThread = null;
     }
 
-    private void play() {
-        int bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_FLOAT);
+    private void setupAudioTrack(SignalFormat format){
+        int bufferSize = AudioTrack.getMinBufferSize((int) format.getSampleRate(), AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT);
         if (bufferSize == AudioTrack.ERROR || bufferSize == AudioTrack.ERROR_BAD_VALUE) {
             bufferSize = SAMPLE_RATE * 2;
         }
-
-        AudioTrack audioTrack = new AudioTrack(
+        bufferSize = Math.min(bufferSize,AudioFormatConfig.FRAME_SIZE);
+        audioTrack = new AudioTrack(
                 AudioManager.STREAM_MUSIC,
                 SAMPLE_RATE,
                 AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_FLOAT,
+                AudioFormat.ENCODING_PCM_16BIT,
                 bufferSize,
                 AudioTrack.MODE_STREAM);
 
-        audioTrack.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
-            @Override
-            public void onPeriodicNotification(AudioTrack track) {
-                if (mListener != null && track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
-                    mListener.onProgress((track.getPlaybackHeadPosition() * 1000) / SAMPLE_RATE);
-                }
-            }
+//        audioTrack.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
+//            @Override
+//            public void onPeriodicNotification(AudioTrack track) {
+//                if (mListener != null && track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
+//                    mListener.onProgress((track.getPlaybackHeadPosition() * 1000) / SAMPLE_RATE);
+//                }
+//            }
+//
+//            @Override
+//            public void onMarkerReached(AudioTrack track) {
+//                Log.v(LOG_TAG, "Audio file end reached");
+//                track.release();
+//                if (mListener != null) {
+//                    mListener.onCompletion();
+//                }
+//            }
+//        });
+//        audioTrack.setPositionNotificationPeriod(SAMPLE_RATE / 30); // 30 times per second
+//        audioTrack.setNotificationMarkerPosition(audioSegment.getNumberSample());
+    }
 
-            @Override
-            public void onMarkerReached(AudioTrack track) {
-                Log.v(LOG_TAG, "Audio file end reached");
-                track.release();
-                if (mListener != null) {
-                    mListener.onCompletion();
-                }
-            }
-        });
-        audioTrack.setPositionNotificationPeriod(SAMPLE_RATE / 30); // 30 times per second
-        audioTrack.setNotificationMarkerPosition(mNumSamples);
+    private void playSegment() {
+        if (audioSegment ==null){
+            Log.v(LOG_TAG, "Segment null");
+            return;
+        }
 
+        this.setupAudioTrack(audioSegment.sourceSignalFormat());
         audioTrack.play();
-
         Log.v(LOG_TAG, "Audio streaming started");
 
-        float[] buffer = new float[bufferSize];
-        mSamples.rewind();
-        int limit = mNumSamples;
+        AudioFrame firstFrame = audioSegment.getHead().getData();
+        AudioSignal srcSignal = firstFrame.getSourceSignal();
+        Iterator<AudioFrame> frameIt = audioSegment.iterator();
         int totalWritten = 0;
-        while (mSamples.position() < limit && mShouldContinue) {
-            int numSamplesLeft = limit - mSamples.position();
-            int samplesToWrite;
-            if (numSamplesLeft >= buffer.length) {
-                mSamples.get(buffer);
-                samplesToWrite = buffer.length;
-            } else {
-                for (int i = numSamplesLeft; i < buffer.length; i++) {
-                    buffer[i] = 0;
-                }
-                mSamples.get(buffer, 0, numSamplesLeft);
-                samplesToWrite = numSamplesLeft;
-            }
-            totalWritten += samplesToWrite;
-            //audioTrack.write(buffer, 0, samplesToWrite);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                audioTrack.write(buffer, 0, samplesToWrite, AudioTrack.WRITE_BLOCKING);
-            } else {
-                Log.d("Playback", "Version low than Lollipop! Can't play!");
-            }
+        // writing audio data to the track
+        while (frameIt.hasNext() && mShouldContinue){
+            AudioFrame frame = frameIt.next();
+            short[] buffer = frame.to16BitBuffer();
+            // write out a frame
+            audioTrack.write(buffer,0,frame.getnSamples());
+            totalWritten += frame.getnSamples();
         }
 
         if (!mShouldContinue) {
             audioTrack.release();
+            this.audioSegment = null;
         }
-
         Log.v(LOG_TAG, "Audio streaming finished. Samples written: " + totalWritten);
-    }
-
-    public void setSegment(AudioSegment segment) {
-        float[] buffer = segment.toFloatArray();
-        this.mSamples = FloatBuffer.wrap(buffer);
-        mNumSamples = buffer.length;
     }
 }

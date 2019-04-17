@@ -1,16 +1,3 @@
-/*
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 
 package com.mt.waveformdemo;
 
@@ -31,7 +18,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.mt.waveformdemo.Audio.AudioDataCollector;
+import com.mt.waveformdemo.Audio.data.AudioSegment;
+import com.mt.waveformdemo.Audio.data.AudioSignal;
 import com.mt.waveformdemo.Audio.io.AudioDataReceivedListener;
 import com.mt.waveformdemo.Audio.processor.AudioProcessorDelegate;
 import com.mt.waveformdemo.Audio.AudioSaver;
@@ -39,7 +27,8 @@ import com.mt.waveformdemo.Audio.io.RecordingThread;
 import com.mt.waveformdemo.Audio.io.PlaybackListener;
 import com.mt.waveformdemo.Audio.io.PlaybackThread;
 import com.mt.waveformdemo.Audio.processor.HighEnergyChecker;
-import com.mt.waveformdemo.Audio.type.AudioSegment;
+import com.mt.waveformdemo.Audio.processor.ZCRChecker;
+import com.mt.waveformdemo.Audio.segmentation.AudioSegmentCollector;
 import com.mt.waveformdemo.WaveFile.WavFile;
 
 import com.mt.waveform.WaveformView;
@@ -55,7 +44,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-public class MainActivity extends AppCompatActivity implements AudioDataReceivedListener, AudioProcessorDelegate, PlaybackListener {
+public class MainActivity extends AppCompatActivity implements AudioDataReceivedListener<AudioSignal>, AudioProcessorDelegate, PlaybackListener {
 
     private WaveformView mRealtimeWaveformView;
     WaveformView mPlaybackView;
@@ -70,14 +59,15 @@ public class MainActivity extends AppCompatActivity implements AudioDataReceived
     FileInputStream fis;
     Uri uri;
 
-    private AudioDataCollector audioDataCollector;
+    private AudioSegmentCollector audioDataCollector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        audioDataCollector = new AudioDataCollector(this);
+        audioDataCollector = new AudioSegmentCollector(this);
         audioDataCollector.addCheckingProcessor(new HighEnergyChecker());
+        //audioDataCollector.addCheckingProcessor(new ZCRChecker());
         //selectFileToPlay();
 
         mPlaybackView = (WaveformView) findViewById(R.id.playbackWaveformView);
@@ -144,13 +134,13 @@ public class MainActivity extends AppCompatActivity implements AudioDataReceived
         playFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mPlaybackThread == null) {
-                    samples = AudioSaver.getInstance().SavedAudioBuffer();
-                    mPlaybackThread = new PlaybackThread(samples, MainActivity.this);
-                } else {
-                    //just change the samples
-                    mPlaybackThread.setmSamples(FloatBuffer.wrap(samples));
-                }
+//                if (mPlaybackThread == null) {
+//                    samples = AudioSaver.getInstance().SavedAudioBuffer();
+//                    mPlaybackThread = new PlaybackThread(samples, MainActivity.this);
+//                } else {
+//                    //just change the samples
+//                    mPlaybackThread.setmSamples(FloatBuffer.wrap(samples));
+//                }
 
                 mPlaybackView.setChannels(2);
                 mPlaybackView.setSampleRate(PlaybackThread.SAMPLE_RATE);
@@ -282,33 +272,6 @@ public class MainActivity extends AppCompatActivity implements AudioDataReceived
         }
     }
 
-    // Audio data delegate
-    @Override
-    public void onAudioDataReceived(Short[] data) {
-        //mRealtimeWaveformView.setSamples(data);
-
-        audioDataCollector.collect(data);
-
-    }
-
-    @Override
-    public void onAudioDataReceived(Float[] data) {
-        //mRealtimeWaveformView.setSamples(data);
-
-        audioDataCollector.collect(data);
-
-    }
-
-    // Segmenting delegate
-    @Override
-    public void processorDidReceiveSegment(AudioSegment audioSegment) {
-        // got a segment
-
-        // padding / cutting
-        Log.d("Got a segment!", "-------------------\n------------\n--------");
-        AudioSaver.getInstance().append(audioSegment);
-    }
-
     // Audio playback thread listener
     @Override
     public void onProgress(int progress) {
@@ -320,5 +283,15 @@ public class MainActivity extends AppCompatActivity implements AudioDataReceived
         mPlaybackView.setMarkerPosition(mPlaybackView.getAudioLength());
         playFab.setImageResource(android.R.drawable.ic_media_play);
 
+    }
+
+    @Override
+    public void processorDidReceiveSegment(AudioSegment audioSegment) {
+        AudioSaver.getInstance().append(audioSegment);
+    }
+
+    @Override
+    public void onAudioDataReceived(AudioSignal signal) {
+        this.audioDataCollector.collect(signal);
     }
 }

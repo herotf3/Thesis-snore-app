@@ -1,27 +1,26 @@
-package com.mt.waveformdemo.Audio;
+package com.mt.waveformdemo.Audio.segmentation;
 
 import android.util.Log;
 
+import com.mt.waveformdemo.Audio.data.AudioFrame;
+import com.mt.waveformdemo.Audio.data.AudioSegment;
+import com.mt.waveformdemo.Audio.data.AudioSignal;
 import com.mt.waveformdemo.Audio.processor.AudioCheckingProcessor;
 import com.mt.waveformdemo.Audio.processor.AudioProcessorDelegate;
-import com.mt.waveformdemo.Audio.type.AudioFrame;
-import com.mt.waveformdemo.Audio.type.AudioSegment;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 /**
  * Created by macbook on 3/28/19.
  */
 
-public class AudioDataCollector {
+public class AudioSegmentCollector implements IDataCollector<AudioSignal>{
 
     private ArrayList<AudioCheckingProcessor> checkerList = new ArrayList<>();
 
     private AudioSegment pendingSegment = new AudioSegment();
     // List of silence frames waiting to merge (if need)
-    private LinkedList<AudioFrame> spacingPool = new LinkedList<>();
+    private AudioSegment spacingPool = new AudioSegment();
 
     private int timeCounter = 0;
     private boolean isFilter = true;
@@ -31,12 +30,12 @@ public class AudioDataCollector {
 
     private AudioProcessorDelegate audioProcessorDelegate;
 
-    public AudioDataCollector(AudioProcessorDelegate audioProcessorDelegate) {
+    public AudioSegmentCollector(AudioProcessorDelegate audioProcessorDelegate) {
         this.audioProcessorDelegate = audioProcessorDelegate;
     }
 
-    public void collect(final Short[] data) {
-        AudioFrame audioFrame = new AudioFrame(data, timeCounter++);
+    public void collect(final AudioFrame audioFrame) {
+
         boolean willGet = true;
         if (isFilter) {
             for (AudioCheckingProcessor checker : checkerList) {
@@ -45,36 +44,36 @@ public class AudioDataCollector {
                     break;
                 }
             }
-            if (willGet) {
+        }
+        if (willGet) {
 
-                this.addCollectedFrame(audioFrame);
-            } else {
-                Log.d("Audio Collector", "---- Detect a silence frame! -----");
-                this.addSilenceFrameToPool(audioFrame);
-            }
+            this.addCollectedFrame(audioFrame);
+        } else {
+            Log.d("Audio Collector", "---- Detect a silence frame! -----");
+            this.addSilenceFrameToPool(audioFrame);
         }
     }
 
     private void addSilenceFrameToPool(AudioFrame audioFrame) {
-        this.spacingPool.add(audioFrame);
+        this.spacingPool.pushBack(audioFrame);
         // the episode is separated by a too long duration
-        if (this.spacingPool.size() > this.MaxSpaceSize) {
+        if (this.spacingPool.length() > this.MaxSpaceSize) {
             this.handleCollectedSegment();
         }
     }
 
     private void addCollectedFrame(AudioFrame audioFrame) {
-        if (spacingPool.size() == 0)  // in the same episode
-            pendingSegment.add(audioFrame);
+        if (spacingPool.length() == 0)  // in the same episode
+            pendingSegment.pushBack(audioFrame);
         else {
             // need to merge with next episode
-            spacingPool.add(audioFrame);
-            pendingSegment.merge(spacingPool);
+            spacingPool.pushBack(audioFrame);
+            pendingSegment.mergeWith(spacingPool);
 
             this.renewSpacingPool();
         }
 
-        if (pendingSegment.getNumberOfFrame() >= this.MaximumFrameForCollect) {
+        if (pendingSegment.length() >= this.MaximumFrameForCollect) {
             this.handleCollectedSegment();
         }
 
@@ -83,12 +82,11 @@ public class AudioDataCollector {
 
     private void handleCollectedSegment() {
         // collect if it have enough frame else ignore(remove)
-        if (this.pendingSegment.getNumberOfFrame() >= this.MinimumFrameForCollect) {
+        if (this.pendingSegment.length() >= this.MinimumFrameForCollect) {
             this.passSegmentToProcess();
         }
 
-        this.pendingSegment = new AudioSegment();
-        this.renewSpacingPool();
+        this.resetPool();
     }
 
     private void passSegmentToProcess() {
@@ -100,7 +98,12 @@ public class AudioDataCollector {
     }
 
     private void renewSpacingPool() {
-        this.spacingPool = new LinkedList<>();
+        this.spacingPool = new AudioSegment();
+    }
+
+    private void resetPool(){
+        pendingSegment = new AudioSegment();
+        spacingPool = new AudioSegment();
     }
 
     public void addCheckingProcessor(AudioCheckingProcessor checker) {
@@ -119,23 +122,10 @@ public class AudioDataCollector {
         this.audioProcessorDelegate = audioProcessorDelegate;
     }
 
-    public void collect(final Float[] data) {
-        AudioFrame audioFrame = new AudioFrame(data, timeCounter++);
-        boolean willGet = true;
-        if (isFilter) {
-            for (AudioCheckingProcessor checker : checkerList) {
-                if (!checker.check(audioFrame)) {
-                    willGet = false;
-                    break;
-                }
-            }
-            if (willGet) {
-
-                this.addCollectedFrame(audioFrame);
-            } else {
-                Log.d("Audio Collector", "---- Detect a silence frame! -----");
-                this.addSilenceFrameToPool(audioFrame);
-            }
+    @Override
+    public void collect(AudioSignal signal) {
+        for (AudioFrame frame : signal) {
+            this.collect(frame);
         }
     }
 }

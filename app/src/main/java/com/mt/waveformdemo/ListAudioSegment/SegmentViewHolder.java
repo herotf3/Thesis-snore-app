@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.mt.waveformdemo.Audio.type.AudioSegment;
+import com.mt.waveformdemo.Audio.data.AudioSegment;
 import com.mt.waveformdemo.R;
 
 /**
@@ -35,7 +35,7 @@ class SegmentViewHolder extends RecyclerView.ViewHolder implements View.OnClickL
     @SuppressLint("SetTextI18n")
     public void bindData(AudioSegment audioSegment) {
         segment = audioSegment;
-        tvName.setText("Segment with start time index:" + audioSegment.getFrames().get(0).getTimeIndex());
+        tvName.setText("Segment with start time index:" + audioSegment.getHead().getData().getStartDataPos());
     }
 
     @Override
